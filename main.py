@@ -6,6 +6,8 @@ import cv2 # OpenCV library
 import numpy as np # Import NumPy library
 import requests
 
+buzzer_pin, relay_one, relay_two = 13,19,26
+
 print("Connecting to API")
 #API_URL = "http://192.168.1.7:3000"
 API_URL = "https://secret-waters-79449.herokuapp.com/"
@@ -16,6 +18,21 @@ if not x.status_code == 200:
 
 print("Connected succesfully!")
 
+
+print("GPIO init and turning on Fan")
+
+import RPi.GPIO as GPIO
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(buzzer_pin, GPIO.OUT)
+GPIO.setup(relay_one, GPIO.OUT)
+GPIO.setup(relay_two, GPIO.OUT)
+GPIO.setwarnings(False)
+# while(1):
+#   GPIO.output(26, GPIO.HIGH)
+#   time.sleep(0.5);
+#   GPIO.output(26, GPIO.LOW)
+#   time.sleep(0.5)
 #check the user activated motion detection or not 
 while(1):
   break
@@ -134,6 +151,9 @@ for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port
     filename = getFileName()
     cv2.imwrite(filename, image)
     print("Motion detected!\n sending image to API")
+    GPIO.output(buzzer_pin, GPIO.HIGH) #turning on buzzer 
+    GPIO.output(relay_one, GPIO.HIGH) #Relay one turn on
+    GPIO.output(relay_two, GPIO.HIGH) #Relay two turn on
     url = API_URL+"/detectedimage"
 
     files = {'file': open(filename, 'rb')}
@@ -144,9 +164,16 @@ for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port
   
     # Clear the stream in preparation for the next frame
     raw_capture.truncate(0)
+
+    #turn of and ready for next event 
+    time.sleep(0.5)
+    GPIO.output(buzzer_pin, GPIO.LOW) #turning on buzzer 
+    GPIO.output(relay_one, GPIO.LOW) #Relay one turn on
+    GPIO.output(relay_two, GPIO.LOW) #Relay two turn on
      
     # If "q" is pressed on the keyboard, 
     # exit this loop
+
     if key == ord("q"):
       break
  
