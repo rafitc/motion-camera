@@ -5,12 +5,12 @@ import time # Provides time-related functions
 import cv2 # OpenCV library
 import numpy as np # Import NumPy library
 import requests
-
+import os, sys
 buzzer_pin, relay_one, relay_two = 13,19,26
 
 print("Connecting to API")
-#API_URL = "http://192.168.1.7:3000"
-API_URL = "https://secret-waters-79449.herokuapp.com/"
+API_URL = "http://192.168.1.11:3000"
+#API_URL = "https://secret-waters-79449.herokuapp.com"
 x = requests.get(API_URL)
 if not x.status_code == 200:
   print("Cant connect to server. Check your network connection!")
@@ -28,6 +28,10 @@ GPIO.setup(buzzer_pin, GPIO.OUT)
 GPIO.setup(relay_one, GPIO.OUT)
 GPIO.setup(relay_two, GPIO.OUT)
 GPIO.setwarnings(False)
+
+GPIO.output(buzzer_pin, GPIO.LOW) #turning on buzzer 
+GPIO.output(relay_one, GPIO.LOW) #Relay one turn on
+GPIO.output(relay_two, GPIO.LOW) #Relay two turn on
 # while(1):
 #   GPIO.output(26, GPIO.HIGH)
 #   time.sleep(0.5);
@@ -35,7 +39,15 @@ GPIO.setwarnings(False)
 #   time.sleep(0.5)
 #check the user activated motion detection or not 
 while(1):
-  break
+  print("Checking the device mode")
+  x = requests.get(API_URL+"/status")
+  mode =  int(x.json()["mode"])
+  if mode == 0:
+    print("Not activated motion detection")
+    time.sleep(1) #wait for asec
+  else:
+    print("Activated motion detection")
+    break
 
 def getFileName():
   obj = time.localtime() 
@@ -68,7 +80,18 @@ kernel = np.ones((20,20),np.uint8)
  
 # Capture frames continuously from the camera
 for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
-     
+    print("running loop")
+    print("Checking the device mode")
+    while(1):
+      print("Checking the device mode")
+      x = requests.get(API_URL+"/status")
+      mode =  int(x.json()["mode"])
+      if mode == 0:
+        print("Not activated motion detection")
+        time.sleep(1) #wait for asec
+      else:
+        print("Activated motion detection")
+        break
     # Grab the raw NumPy array representing the image
     image = frame.array
  
@@ -99,7 +122,7 @@ for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port
     # If a pixel is less than ##, it is considered black (background). 
     # Otherwise, it is white (foreground). 255 is upper limit.
     # Modify the number after absolute_difference as you see fit.
-    _, absolute_difference = cv2.threshold(absolute_difference, 100, 255, cv2.THRESH_BINARY)
+    _, absolute_difference = cv2.threshold(absolute_difference, 150, 255, cv2.THRESH_BINARY)
  
     # Find the contours of the object inside the binary image
     contours, hierarchy = cv2.findContours(absolute_difference,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)[-2:]
@@ -148,7 +171,7 @@ for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port
           
     # Display the resulting frame
     cv2.imshow("Frame",image)
-    filename = getFileName()
+    filename = "image.jpeg" #getFileName()
     cv2.imwrite(filename, image)
     print("Motion detected!\n sending image to API")
     GPIO.output(buzzer_pin, GPIO.HIGH) #turning on buzzer 
@@ -157,8 +180,9 @@ for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port
     url = API_URL+"/detectedimage"
 
     files = {'file': open(filename, 'rb')}
-    r = requests.post(url, files = files)
-    print(r)
+    print("filename:", filename)
+    r = requests.post(url, files = dict(files))
+    print("R:",r)
     # Wait for keyPress for 1 millisecond
     key = cv2.waitKey(1) & 0xFF
   
@@ -166,14 +190,13 @@ for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port
     raw_capture.truncate(0)
 
     #turn of and ready for next event 
-    time.sleep(0.5)
+    time.sleep(2)
     GPIO.output(buzzer_pin, GPIO.LOW) #turning on buzzer 
     GPIO.output(relay_one, GPIO.LOW) #Relay one turn on
     GPIO.output(relay_two, GPIO.LOW) #Relay two turn on
      
     # If "q" is pressed on the keyboard, 
     # exit this loop
-
     if key == ord("q"):
       break
  
