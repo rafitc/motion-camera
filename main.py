@@ -152,24 +152,37 @@ for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port
     filename = getFileName()
     cv2.imwrite(filename, image)
     print("Motion detected!\n sending image to API")
-    GPIO.output(buzzer_pin, GPIO.HIGH) #turning on buzzer 
-    GPIO.output(relay_one, GPIO.HIGH) #Relay one turn on
-    GPIO.output(relay_two, GPIO.HIGH) #Relay two turn on
-    url = API_URL+"/detectedimage"
-    files = {'file': open(filename, 'rb')}
-    r = requests.post(url, files = files)
-    print(r)
+    #check 
+    print("Checking the device mode")
+    motion_mode = False
+    x = requests.get(API_URL+"/status")
+    mode =  int(x.json()["mode"])
+    if mode == 0:
+      print("Not activated motion detection")
+      motion_mode = False
+      time.sleep(1) #wait for asec
+    else:
+      print("Activated motion detection")
+      motion_mode = True
+    if(motion_mode):
+      GPIO.output(buzzer_pin, GPIO.HIGH) #turning on buzzer 
+      GPIO.output(relay_one, GPIO.HIGH) #Relay one turn on
+      GPIO.output(relay_two, GPIO.HIGH) #Relay two turn on
+      url = API_URL+"/detectedimage"
+      files = {'file': open(filename, 'rb')}
+      r = requests.post(url, files = files)
+      print(r)
     # Wait for keyPress for 1 millisecond
-    key = cv2.waitKey(1) & 0xFF
+      key = cv2.waitKey(1) & 0xFF
   
     # Clear the stream in preparation for the next frame
-    raw_capture.truncate(0)
+      raw_capture.truncate(0)
 
     #turn of and ready for next event 
-    time.sleep(0.5)
-    GPIO.output(buzzer_pin, GPIO.LOW) #turning on buzzer 
-    GPIO.output(relay_one, GPIO.LOW) #Relay one turn on
-    GPIO.output(relay_two, GPIO.LOW) #Relay two turn on
+      time.sleep(0.5)
+      GPIO.output(buzzer_pin, GPIO.LOW) #turning on buzzer 
+      GPIO.output(relay_one, GPIO.LOW) #Relay one turn on
+      GPIO.output(relay_two, GPIO.LOW) #Relay two turn on
      
     # If "q" is pressed on the keyboard, 
     # exit this loop

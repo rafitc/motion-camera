@@ -3,6 +3,17 @@ import requests
 import numpy as np
 import time
 
+
+buzzer_pin, relay_one, relay_two = 13,19,26
+
+# import RPi.GPIO as GPIO
+# GPIO.setwarnings(False)
+# GPIO.setmode(GPIO.BCM)
+# GPIO.setup(buzzer_pin, GPIO.OUT)
+# GPIO.setup(relay_one, GPIO.OUT)
+# GPIO.setup(relay_two, GPIO.OUT)
+# GPIO.setwarnings(False)
+
 face_cascade=cv2.CascadeClassifier("haarcascade_frontalface_alt2.xml")
 ds_factor=0.6
 API_URL = "https://secret-waters-79449.herokuapp.com"
@@ -15,6 +26,7 @@ def getFileName():
 class VideoCamera(object):
     def __init__(self):
         self.count = 0
+        self.motion = 0
         self.static_back = None
         self.video = cv2.VideoCapture(1)
         success, image = self.video.read()
@@ -39,7 +51,6 @@ class VideoCamera(object):
     #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
     def get_frame(self):
         success, image = self.video.read()
-        motion = 0
         image=cv2.resize(image,None,fx=ds_factor,fy=ds_factor,interpolation=cv2.INTER_AREA)
         gray=cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (21, 21), 0)
@@ -56,19 +67,42 @@ class VideoCamera(object):
         for contour in cnts:
             if cv2.contourArea(contour) < 10000:
                 continue
-            motion = 1
+            self.motion += 1
             (x, y, w, h) = cv2.boundingRect(contour)
             # making green rectangle around the moving object
             cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 3)
-            print("Motion detected : ", self.count)
-            filename = getFileName()
-            cv2.imwrite(filename, image)
-            url = API_URL + "/detectedimage"
-            files = {'file': open(filename, 'rb')}
-            print("sending image to cloud")
-            r = requests.post(url, files = files)
-            print(r)
-            self.count += 1
+            motion_mode = False
+            if self.motion%150 == 0:
+                self.motion = 0
+                print("Checking the device mode")
+                x = requests.get(API_URL+"/status")
+                mode =  int(x.json()["mode"])
+                if mode == 0:
+                    print("Not activated motion detection")
+                    motion_mode = False
+                #time.sleep(1) #wait for asec
+                else:
+                    print("Activated motion detection")
+                    motion_mode = True
+            if motion_mode:
+                print("Motion detected : ", self.count)
+
+                # GPIO.output(buzzer_pin, GPIO.HIGH) #turning on buzzer 
+                # GPIO.output(relay_one, GPIO.HIGH) #Relay one turn on
+                # GPIO.output(relay_two, GPIO.HIGH) #Relay two turn on
+
+                filename = getFileName()
+                cv2.imwrite(filename, image)
+                url = API_URL + "/detectedimage"
+                files = {'file': open(filename, 'rb')}
+                print("sending image to cloud")
+                r = requests.post(url, files = files)
+                print(r)
+                self.count += 1
+                time.sleep(0.5)
+                # GPIO.output(buzzer_pin, GPIO.LOW) #turning on buzzer 
+                # GPIO.output(relay_one, GPIO.LOW) #Relay one turn on
+                # GPIO.output(relay_two, GPIO.LOW) #Relay two turn on
 
         # face_rects=face_cascade.detectMultiScale(gray,1.3,5)
         # for (x,y,w,h) in face_rects:
