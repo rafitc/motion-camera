@@ -44,8 +44,9 @@ def getFileName():
 
 # Initialize the camera
 print("Accessing Pi Camera")
-camera = PiCamera()
-
+#camera = PiCamera()
+camera = cv2.VideoCapture(0)
+ret, image = camera.read()
 # Set the camera resolution
 camera.resolution = (640, 480)
  
@@ -144,7 +145,7 @@ for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port
     # bounding box) on the image
     text = "x: " + str(x2) + ", y: " + str(y2)
     cv2.putText(image, text, (x2 - 10, y2 - 10),
-      cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
           
     # Display the resulting frame
     cv2.imshow("Frame",image)
@@ -155,7 +156,6 @@ for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port
     GPIO.output(relay_one, GPIO.HIGH) #Relay one turn on
     GPIO.output(relay_two, GPIO.HIGH) #Relay two turn on
     url = API_URL+"/detectedimage"
-
     files = {'file': open(filename, 'rb')}
     r = requests.post(url, files = files)
     print(r)
