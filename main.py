@@ -9,8 +9,8 @@ import os, sys
 buzzer_pin, relay_one, relay_two = 13,19,26
 
 print("Connecting to API")
-API_URL = "http://192.168.1.11:3000"
-#API_URL = "https://secret-waters-79449.herokuapp.com"
+#API_URL = "http://192.168.1.11:3000"
+API_URL = "https://secret-waters-79449.herokuapp.com"
 x = requests.get(API_URL)
 if not x.status_code == 200:
   print("Cant connect to server. Check your network connection!")
