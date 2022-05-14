@@ -2,9 +2,9 @@ import cv2
 import requests
 import numpy as np
 import time
+import os 
 
-
-buzzer_pin, relay_one, relay_two = 13,19,26
+buzzer_pin, relay_one, relay_two = 33,35,37
 
 # import RPi.GPIO as GPIO
 # GPIO.setwarnings(False)
@@ -59,7 +59,7 @@ class VideoCamera(object):
             print("got static back")
             pass
         diff_frame = cv2.absdiff(self.static_back, gray)
-        print("data frame")
+        #print("data frame")
         thresh_frame = cv2.threshold(diff_frame, 30, 255, cv2.THRESH_BINARY)[1]
         thresh_frame = cv2.dilate(thresh_frame, None, iterations = 2)
         cnts,_ = cv2.findContours(thresh_frame.copy(),
@@ -98,6 +98,7 @@ class VideoCamera(object):
                 print("sending image to cloud")
                 r = requests.post(url, files = files)
                 print(r)
+                os.remove(filename)
                 self.count += 1
                 time.sleep(0.5)
                 # GPIO.output(buzzer_pin, GPIO.LOW) #turning on buzzer 
