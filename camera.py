@@ -6,13 +6,13 @@ import os
 
 buzzer_pin, relay_one, relay_two = 33,35,37
 
-import RPi.GPIO as GPIO
-GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(buzzer_pin, GPIO.OUT)
-GPIO.setup(relay_one, GPIO.OUT)
-GPIO.setup(relay_two, GPIO.OUT)
-GPIO.setwarnings(False)
+# import RPi.GPIO as GPIO
+# GPIO.setwarnings(False)
+# GPIO.setmode(GPIO.BCM)
+# GPIO.setup(buzzer_pin, GPIO.OUT)
+# GPIO.setup(relay_one, GPIO.OUT)
+# GPIO.setup(relay_two, GPIO.OUT)
+# GPIO.setwarnings(False)
 
 face_cascade=cv2.CascadeClassifier("haarcascade_frontalface_alt2.xml")
 ds_factor=0.6
@@ -87,9 +87,9 @@ class VideoCamera(object):
             if motion_mode:
                 print("Motion detected : ", self.count)
 
-                GPIO.output(buzzer_pin, GPIO.HIGH) #turning on buzzer 
-                GPIO.output(relay_one, GPIO.HIGH) #Relay one turn on
-                GPIO.output(relay_two, GPIO.HIGH) #Relay two turn on
+                # GPIO.output(buzzer_pin, GPIO.HIGH) #turning on buzzer 
+                # GPIO.output(relay_one, GPIO.HIGH) #Relay one turn on
+                # GPIO.output(relay_two, GPIO.HIGH) #Relay two turn on
 
                 filename = getFileName()
                 cv2.imwrite(filename, image)
@@ -101,9 +101,9 @@ class VideoCamera(object):
                 os.remove(filename)
                 self.count += 1
                 time.sleep(0.5)
-                GPIO.output(buzzer_pin, GPIO.LOW) #turning on buzzer 
-                GPIO.output(relay_one, GPIO.LOW) #Relay one turn on
-                GPIO.output(relay_two, GPIO.LOW) #Relay two turn on
+                # GPIO.output(buzzer_pin, GPIO.LOW) #turning on buzzer 
+                # GPIO.output(relay_one, GPIO.LOW) #Relay one turn on
+                # GPIO.output(relay_two, GPIO.LOW) #Relay two turn on
 
         # face_rects=face_cascade.detectMultiScale(gray,1.3,5)
         # for (x,y,w,h) in face_rects:
