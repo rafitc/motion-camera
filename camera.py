@@ -1,5 +1,7 @@
 import cv2
 import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 import numpy as np
 import time
 import os 
@@ -17,6 +19,12 @@ buzzer_pin, relay_one, relay_two = 33,35,37
 face_cascade=cv2.CascadeClassifier("haarcascade_frontalface_alt2.xml")
 ds_factor=0.6
 API_URL = "https://secret-waters-79449.herokuapp.com"
+session = requests.Session()
+retry = Retry(connect=3, backoff_factor=0.5)
+adapter = HTTPAdapter(max_retries=retry)
+session.mount('http://', adapter)
+session.mount('https://', adapter)
+
 
 def getFileName():
   obj = time.localtime() 
@@ -30,7 +38,7 @@ class VideoCamera(object):
         self.static_back = None
         self.video = cv2.VideoCapture(1)
         success, image = self.video.read()
-        x = requests.get(API_URL)
+        x = session.get(API_URL)
         if not x.status_code == 200:
             print("Cant connect to server. Check your network connection!")
             exit()
